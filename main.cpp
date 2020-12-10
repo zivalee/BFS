@@ -9,68 +9,109 @@ using namespace std;
 
 int estimateLB(vector<pair<int, int>> proc, int n);
 
+int calScheduledSumC(vector<pair<int, int>> node);
 
 int main() {
     // x: burst time, y: arrival time
     vector<pair<int, int>> jobs = {{6, 0},
-                                {2, 2},
-                                {3, 2},
-                                {2, 6},
-                                {5, 7},
-                                {2,9}};
+                                   {2, 2},
+                                   {3, 2},
+                                   {2, 6},
+                                   {5, 7},
+                                   {2, 9}};
     int n = 6;
     // create min heap according to x(objective value)
     typedef pair<int, vector<int>> permutation;
     priority_queue<permutation, vector<permutation>, greater<permutation>> heap;
 
     // {pair{process time, permutation{}}}
-    heap.push(make_pair(6, vector<int> {1}));
-    heap.push(make_pair(4, vector<int> {2}));
-    heap.push(make_pair(5, vector<int> {3}));
-    heap.push(make_pair(8, vector<int> {4}));
-    heap.push(make_pair(12, vector<int> {5}));
-    heap.push(make_pair(11, vector<int> {6}));
+    for (int i = 0; i < n; i++) {
+        // i = scheduled job
+        int sumC = jobs[i].first + jobs[i].second;
+        // estimate not scheduled jobs (use SRPT)
+        vector<pair<int, int>> originJobs = jobs;
+        originJobs.erase(originJobs.begin() + i);
+        int estimate = estimateLB(originJobs, n - 1);
+
+        heap.push(make_pair(sumC + estimate, vector<int>{i + 1}));
+    }
+//    heap.push(make_pair(6, vector<int> {1}));
+//    heap.push(make_pair(4, vector<int> {2}));
+//    heap.push(make_pair(5, vector<int> {3}));
+//    heap.push(make_pair(8, vector<int> {4}));
+//    heap.push(make_pair(12, vector<int> {5}));
+//    heap.push(make_pair(11, vector<int> {6}));
+
+// print heap
+//    while (! heap.empty() ) {
+//        cout << heap.top().first << "\n";
+//        heap.pop();
+//    }
 
 //    print best permutation
 //    vector<int> vec = heap.top().second;
 //    for(int j =0; j<vec.size(); j++){
 //        cout << "init" << vec.at(j) << endl;
 //    }
-//    for(int i = 1; i <= n; i++){
-//        vector<int> vec = heap.top().second;
-//        // if job is not scheduled yet
-//        if(find(vec.begin(), vec.end(), i) == vec.end()){
-//            vec.push_back(i); // vec: new permutation TODO SRPT find object value
-//            vector<pair<int, int>> toCount;
-//            for(int j =0; j<vec.size(); j++){
-//                toCount.push_back(jobs.at(vec.at(j)-1));
+    while (heap.top().second.size() != n) {
+        for (int i = 1; i <= n; i++) {
+            vector<int> vec = heap.top().second;
+            // if job is not scheduled yet
+            if (find(vec.begin(), vec.end(), i) == vec.end()) {
+                vec.push_back(i); // vec: new permutation TODO SRPT find object value
+
+                // updated scheduled jobs;
+                vector<pair<int, int>> toCount;
+                // updated unscheduled jobs;
+                vector<pair<int, int>> originJobs = jobs;
+                for (int j = 0; j < vec.size(); j++) {
+                    toCount.push_back(jobs.at(vec.at(j) - 1));
+                    originJobs.erase(originJobs.begin() + vec.at(j) - 1);
+                }
+                // print originJobs
+//            for(int x =0; x<originJobs.size(); x++){
+//                cout << originJobs.at(x).first << originJobs.at(x).second << endl;
 //            }
-//            // print possible permutation
+//            cout << "------" << endl;
+                // print scheduled jobs
 //            for(int x =0; x<toCount.size(); x++){
 //                cout << toCount.at(x).first;
 //                cout << toCount.at(x).second << endl;
 //            }
+
+                int scheduledSumC = calScheduledSumC(toCount);
+                int unscheduledSumC = estimateLB(originJobs, originJobs.size());
+//            cout << scheduledSumC << endl;
 //            cout << "------" << endl;
-//
-////            int res = estimateLB(toCount, toCount.size());
-////            cout << res << endl;
-////            heap.push(make_pair(2, vec));
-//
-//        }
-//    }
-//    print heap
-//    while (! heap.empty() ) {
-//        cout << heap.top().first << "\n";
-//        heap.pop();
-//    }
+                heap.push(make_pair(scheduledSumC + unscheduledSumC, vec));
+
+            }
+        }
+    }
+    cout << heap.top().second.size();
 
 
-    int LB = estimateLB({{2,2}, {2,6}}, 2);
-//    int LB = estimateLB(jobs, jobs.size());
-    cout << LB;
+    //    int LB = estimateLB(jobs, jobs.size());
+//    cout << LB;
 
     return 0;
 }
+
+
+int calScheduledSumC(vector<pair<int, int>> node) {
+    vector<int> sum;
+    auto sumC = 0;
+    for (auto i = 0; i < node.size(); i++) {
+        if (i == 0 || node[i].second > sum.back())
+            sum.push_back(node[i].first + node[i].second);
+        else
+            sum.push_back(sum.back() + node[i].first);
+    }
+    for (auto i = 0; i < sum.size(); i++)
+        sumC += sum[i];
+    return sumC;
+}
+
 
 // first: Process Length (pj)
 // second: Arrival Time (rj)
@@ -146,7 +187,7 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
 
     // after all process length are put into heap
     // count the finished time of the remaining jobs in heap
-    int num =heap.size();
+    int num = heap.size();
     for (int j = 0; j < num; j++) {
         // count time
         wt.push_back(afterCountT + heap.front());
@@ -159,5 +200,6 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
     for (int b = 0; b < wt.size(); b++) {
         total += wt[b];
     }
+
     return total;
 }
