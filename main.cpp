@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <bits/stdc++.h>
+#include "stdc++.h"
 
 using namespace std;
 // 1. BFS 長樹
@@ -35,12 +35,6 @@ int main() {
 
         heap.push(make_pair(sumC + estimate, vector<int>{i + 1}));
     }
-//    heap.push(make_pair(6, vector<int> {1}));
-//    heap.push(make_pair(4, vector<int> {2}));
-//    heap.push(make_pair(5, vector<int> {3}));
-//    heap.push(make_pair(8, vector<int> {4}));
-//    heap.push(make_pair(12, vector<int> {5}));
-//    heap.push(make_pair(11, vector<int> {6}));
 
 // print heap
 //    while (! heap.empty() ) {
@@ -54,45 +48,64 @@ int main() {
 //        cout << "init" << vec.at(j) << endl;
 //    }
     while (heap.top().second.size() != n) {
+
         for (int i = 1; i <= n; i++) {
             vector<int> vec = heap.top().second;
+
+            // print vec
+//            for (int x = 0; x < vec.size(); x++) {
+//                cout << vec[x] << ", ";
+//            }
+            cout << "--" << endl;
             // if job is not scheduled yet
             if (find(vec.begin(), vec.end(), i) == vec.end()) {
-                vec.push_back(i); // vec: new permutation TODO SRPT find object value
+                vec.push_back(i);
 
                 // updated scheduled jobs;
+                vector<int> scheduled;  // job index
                 vector<pair<int, int>> toCount;
                 // updated unscheduled jobs;
-                vector<pair<int, int>> originJobs = jobs;
+                vector<pair<int, int>> unscheduledToCount;
                 for (int j = 0; j < vec.size(); j++) {
                     toCount.push_back(jobs.at(vec.at(j) - 1));
-                    originJobs.erase(originJobs.begin() + vec.at(j) - 1);
+                    scheduled.push_back(vec.at(j));
                 }
-                // print originJobs
-//            for(int x =0; x<originJobs.size(); x++){
-//                cout << originJobs.at(x).first << originJobs.at(x).second << endl;
-//            }
-//            cout << "------" << endl;
+                // print vec
+                for (int x = 0; x < vec.size(); x++) {
+                    cout << vec[x];
+                }
+                cout << "---" << endl;
+                for (int a = 1; a <= n; a++) {
+                    if (find(scheduled.begin(), scheduled.end(), a) == scheduled.end()) {
+                        unscheduledToCount.push_back(jobs.at(a - 1));
+                    }
+                }
                 // print scheduled jobs
-//            for(int x =0; x<toCount.size(); x++){
-//                cout << toCount.at(x).first;
-//                cout << toCount.at(x).second << endl;
-//            }
+//                for (int x = 0; x < toCount.size(); x++) {
+//                    cout << toCount.at(x).first;
+//                    cout << toCount.at(x).second << endl;
+//                }
+//                cout << "------" << endl;
+                // print unscheduledToCount
+//             for(int x = 0; x<unscheduledToCount.size(); x++){
+//                 cout << unscheduledToCount.at(x).first << unscheduledToCount.at(x).second << endl;
+//             }
+                cout << "-------------------------" << endl;
+
 
                 int scheduledSumC = calScheduledSumC(toCount);
-                int unscheduledSumC = estimateLB(originJobs, originJobs.size());
-//            cout << scheduledSumC << endl;
-//            cout << "------" << endl;
+                int unscheduledSumC = estimateLB(unscheduledToCount, unscheduledToCount.size());
+                cout << unscheduledSumC << endl;
                 heap.push(make_pair(scheduledSumC + unscheduledSumC, vec));
 
             }
         }
     }
-    cout << heap.top().second.size();
+//    cout << "hello" << heap.top().second.size();
 
 
     //    int LB = estimateLB(jobs, jobs.size());
-//    cout << LB;
+    //    cout << LB;
 
     return 0;
 }
@@ -119,11 +132,11 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
     int diff = 0;
     int afterCountT = 0;
     vector<int> wt;
-    vector<int> heap;
+    vector<int> *heap = new vector<int>();
     // put Process Length of first element into heap
-    heap.push_back(proc[0].first);
+    heap->push_back(proc[0].first);
     // make min heap
-    make_heap(heap.begin(), heap.end(), greater<>{});
+    make_heap(heap->begin(), heap->end(), greater<>{});
 
     // adding process length of elements into heap
     // examine every element's arrival time and adjust the heap before putting the process length into heap
@@ -137,21 +150,21 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
 
             // if the time passed can't even finished one job
             // root of heap (min job length) > time passed
-            if (heap.front() > diff) {
-                heap.front() -= diff;
+            if (heap->front() > diff) {
+                heap->front() -= diff;
             } else {
                 // if the time passed can finish more than one job
                 // arrival time of the previous job
                 int previousT = proc[i - 1].second;
 
                 while (diff > 0) {
-                    int temp = heap.front();
+                    int temp = heap->front();
 
                     if (diff >= temp) {
                         // if can finish more jobs
                         // delete root
-                        pop_heap(heap.begin(), heap.end(), greater<>{});
-                        heap.pop_back();
+                        pop_heap(heap->begin(), heap->end(), greater<>{});
+                        heap->pop_back();
                         // update time passed (diff)
                         diff -= temp;
                         // count job finished time
@@ -160,7 +173,7 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
                         previousT = temp + previousT;
                     } else {
                         // if no time left
-                        heap.front() -= diff;
+                        heap->front() -= diff;
                         diff = 0;
                     }
                 }
@@ -168,8 +181,8 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
         }
 
         // insert job length to heap
-        heap.push_back(proc[i].first);
-        push_heap(heap.begin(), heap.end(), greater<>{});
+        heap->push_back(proc[i].first);
+        push_heap(heap->begin(), heap->end(), greater<>{});
 
         // print heap
 //        for (int i = 0; i < heap.size(); i++) {
@@ -187,19 +200,19 @@ int estimateLB(vector<pair<int, int>> proc, int n) {
 
     // after all process length are put into heap
     // count the finished time of the remaining jobs in heap
-    int num = heap.size();
+    int num = heap->size();
     for (int j = 0; j < num; j++) {
         // count time
-        wt.push_back(afterCountT + heap.front());
-        afterCountT += heap.front();
+        wt.push_back(afterCountT + heap->front());
+        afterCountT += heap->front();
         // delete the counted root min
-        pop_heap(heap.begin(), heap.end(), greater<>{});
-        heap.pop_back();
+        pop_heap(heap->begin(), heap->end(), greater<>{});
+        heap->pop_back();
     }
     int total = 0;
     for (int b = 0; b < wt.size(); b++) {
         total += wt[b];
     }
-
+//    delete heap;
     return total;
 }
