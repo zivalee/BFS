@@ -1,6 +1,5 @@
-# Best First Search
+# Best First Search with Branch and Bound
 ## Algorithm Practice 
-### Best First Search with Branch and Bound
 預估該點LB = calScheduledSumC + estimateLB
 
 1. 將所有單一 jobs 放入 heap<br>
